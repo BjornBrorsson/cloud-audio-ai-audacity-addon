@@ -57,8 +57,8 @@ jobs:
     - name: Update setup.py version
       run: |
         VERSION="${{ steps.version.outputs.tag }}"
-        VERSION_NUM="${VERSION#v}"  # Remove 'v' prefix
-        sed -i "s/version='[^']*'/version='$VERSION_NUM'/" setup.py
+        VERSION_NUM="${VERSION#v}"
+        python -c "import re, sys; content = open('setup.py').read(); content = re.sub(r\"version='[^']*'\", \"version='\" + sys.argv[1] + \"'\", content); open('setup.py', 'w').write(content); print('Updated version to ' + sys.argv[1])" "$VERSION_NUM"
       shell: bash
     
     - name: Build standalone executable (Windows)
