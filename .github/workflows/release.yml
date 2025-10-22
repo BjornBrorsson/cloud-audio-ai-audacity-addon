@@ -1,5 +1,9 @@
 name: Build and Release
 
+permissions:
+  contents: write
+  packages: write
+
 on:
   push:
     tags:
@@ -33,7 +37,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pyinstaller
+        pip install pyinstaller wheel setuptools
     
     - name: Create version file
       run: |
@@ -55,7 +59,9 @@ jobs:
       continue-on-error: true
     
     - name: Create distribution package
-      run: python setup.py sdist bdist_wheel
+      run: |
+        pip install wheel setuptools
+        python setup.py sdist bdist_wheel
       continue-on-error: true
     
     - name: Build Windows Installer
@@ -214,15 +220,21 @@ jobs:
         EOF
     
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
           release-*/*.zip
           release-*/*.tar.gz
-          release-*/dist/*
+          release-*/*.dmg
+          release-*/*.deb
+          release-*/*.exe
+          release-*/dist/*.whl
+          release-*/dist/*.tar.gz
         body_path: RELEASE_NOTES.md
         draft: false
         prerelease: false
+        fail_on_unmatched_files: false
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
