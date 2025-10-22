@@ -58,11 +58,37 @@ jobs:
       run: python setup.py sdist bdist_wheel
       continue-on-error: true
     
+    - name: Build Windows Installer
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install innosetup -y || echo "Inno Setup install skipped"
+        cd installer/windows
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss || echo "Installer build skipped"
+      shell: pwsh
+      continue-on-error: true
+    
+    - name: Build Linux .deb Package
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cd installer/linux
+        chmod +x build_deb.sh
+        ./build_deb.sh || echo "Deb build skipped"
+      continue-on-error: true
+    
+    - name: Build macOS .dmg
+      if: matrix.os == 'macos-latest'
+      run: |
+        cd installer/macos
+        chmod +x build_dmg.sh
+        ./build_dmg.sh || echo "DMG build skipped"
+      continue-on-error: true
+    
     - name: Package source code
       run: |
         mkdir -p release
         cp -r src requirements.txt setup.py audacity_cloudai.py gui_launcher.py README.md LICENSE .env.example release/ || true
-        cp -r "Start GUI.bat" "Start GUI.sh" release/ || true
+        cp -r "Start GUI.bat" "Start GUI.sh" install.bat install.sh release/ || true
+        cp -r docs examples nyquist release/ || true
       shell: bash
       continue-on-error: true
     
@@ -92,6 +118,7 @@ jobs:
         path: |
           *.zip
           *.tar.gz
+          *.dmg
           dist/
         retention-days: 30
       continue-on-error: true
