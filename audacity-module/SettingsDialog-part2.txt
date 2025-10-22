@@ -1,0 +1,64 @@
+void SettingsDialog::SaveSettings()
+{
+   wxConfig config(wxT("AudacityCloudAI"));
+   
+   config.Write(wxT("/API/Key"), mApiKeyCtrl->GetValue());
+   config.Write(wxT("/General/AutoUpdate"), mAutoUpdateCheck->GetValue());
+   config.Write(wxT("/General/ShowNotifications"), mShowNotificationsCheck->GetValue());
+   
+   mApiKey = mApiKeyCtrl->GetValue();
+   mAutoUpdate = mAutoUpdateCheck->GetValue();
+   mShowNotifications = mShowNotificationsCheck->GetValue();
+}
+
+void SettingsDialog::OnTestConnection(wxCommandEvent &evt)
+{
+   wxString message;
+   if (mBridge->TestConnection(message))
+   {
+      mConnectionStatus->SetLabelText(wxT("✓ Connected"));
+      mConnectionStatus->SetForegroundColour(*wxGREEN);
+   }
+   else
+   {
+      mConnectionStatus->SetLabelText(wxT("✗ Failed: ") + message);
+      mConnectionStatus->SetForegroundColour(*wxRED);
+   }
+}
+
+void SettingsDialog::OnBrowsePython(wxCommandEvent &evt)
+{
+   wxFileDialog dialog(this, wxT("Select Python Executable"));
+   if (dialog.ShowModal() == wxID_OK)
+   {
+      mPythonPathCtrl->SetValue(dialog.GetPath());
+   }
+}
+
+void SettingsDialog::OnSave(wxCommandEvent &evt)
+{
+   SaveSettings();
+   EndModal(wxID_OK);
+}
+
+void SettingsDialog::OnCancel(wxCommandEvent &evt)
+{
+   EndModal(wxID_CANCEL);
+}
+
+void SettingsDialog::OnRestoreDefaults(wxCommandEvent &evt)
+{
+   if (wxMessageBox(wxT("Restore all settings to defaults?"),
+                   wxT("Confirm"), wxYES_NO | wxICON_QUESTION) == wxYES)
+   {
+      mDefaultStability->SetValue(0.5);
+      mDefaultSimilarity->SetValue(0.75);
+      mDefaultMusicDuration->SetValue(30);
+      mDefaultSfxDuration->SetValue(5);
+      mAutoUpdateCheck->SetValue(true);
+      mShowNotificationsCheck->SetValue(true);
+      mShowProgressCheck->SetValue(true);
+      mKeepTempFilesCheck->SetValue(false);
+      mOutputFormatChoice->SetSelection(0);
+   }
+}
