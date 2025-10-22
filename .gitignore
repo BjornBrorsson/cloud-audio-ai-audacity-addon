@@ -58,3 +58,6 @@ htmlcov/
 
 # Distribution
 *.whl
+
+# Development notes (not for repo)
+windsurf-notes.md
