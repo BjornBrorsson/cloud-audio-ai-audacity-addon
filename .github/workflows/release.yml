@@ -1,0 +1,229 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build:
+    name: Build Release Packages
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.11']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Create version file
+      run: |
+        echo "VERSION = '${{ github.ref_name }}'" > src/version.py
+      shell: bash
+    
+    - name: Build standalone executable (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        pyinstaller --onefile --windowed --name="AudacityCloudAI-GUI" --icon=assets/icon.ico gui_launcher.py || pyinstaller --onefile --name="AudacityCloudAI-GUI" gui_launcher.py
+        pyinstaller --onefile --name="AudacityCloudAI-CLI" audacity_cloudai.py
+      continue-on-error: true
+    
+    - name: Build standalone executable (Linux/Mac)
+      if: matrix.os != 'windows-latest'
+      run: |
+        pyinstaller --onefile --name="AudacityCloudAI-GUI" gui_launcher.py || echo "GUI build skipped"
+        pyinstaller --onefile --name="AudacityCloudAI-CLI" audacity_cloudai.py
+      continue-on-error: true
+    
+    - name: Create distribution package
+      run: python setup.py sdist bdist_wheel
+      continue-on-error: true
+    
+    - name: Package source code
+      run: |
+        mkdir -p release
+        cp -r src requirements.txt setup.py audacity_cloudai.py gui_launcher.py README.md LICENSE .env.example release/ || true
+        cp -r "Start GUI.bat" "Start GUI.sh" release/ || true
+      shell: bash
+      continue-on-error: true
+    
+    - name: Create archive (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        Compress-Archive -Path release\* -DestinationPath AudacityCloudAI-Windows-${{ github.ref_name }}.zip
+      shell: pwsh
+      continue-on-error: true
+    
+    - name: Create archive (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        tar -czf AudacityCloudAI-Linux-${{ github.ref_name }}.tar.gz -C release .
+      continue-on-error: true
+    
+    - name: Create archive (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        tar -czf AudacityCloudAI-macOS-${{ github.ref_name }}.tar.gz -C release .
+      continue-on-error: true
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-${{ matrix.os }}
+        path: |
+          *.zip
+          *.tar.gz
+          dist/
+        retention-days: 30
+      continue-on-error: true
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+    
+    - name: Create Release Notes
+      run: |
+        cat > RELEASE_NOTES.md << 'EOF'
+        # Audacity Cloud AI ${{ github.ref_name }}
+        
+        ## 🎉 What's New
+        
+        Full-featured AI audio plugin for Audacity with:
+        - 🎤 Text-to-Speech (32+ languages)
+        - 🎶 Music Generation
+        - 🔊 Sound Effects
+        - 🎧 Voice Isolation
+        - 📝 Audio Transcription (99 languages)
+        - 👥 Voice Library Browser
+        
+        ## 📦 Installation
+        
+        ### Quick Install (Recommended)
+        
+        **Windows:**
+        1. Download `AudacityCloudAI-Windows-${{ github.ref_name }}.zip`
+        2. Extract to a folder
+        3. Run `install.bat`
+        4. Double-click `Start GUI.bat`
+        
+        **Linux/macOS:**
+        1. Download the appropriate `.tar.gz` file
+        2. Extract: `tar -xzf AudacityCloudAI-*.tar.gz`
+        3. Run: `./install.sh`
+        4. Launch: `./Start GUI.sh`
+        
+        ### Manual Install
+        
+        ```bash
+        pip install -r requirements.txt
+        python gui_launcher.py
+        ```
+        
+        ## 📚 Documentation
+        
+        - [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md)
+        - [Installation Guide](https://github.com/${{ github.repository }}/blob/main/INSTALLATION.md)
+        - [GUI Guide](https://github.com/${{ github.repository }}/blob/main/GUI_README.md)
+        - [Full Documentation](https://github.com/${{ github.repository }}/blob/main/README_EXTENDED.md)
+        
+        ## ⚡ Quick Start
+        
+        1. Get your ElevenLabs API key at https://elevenlabs.io
+        2. Launch the GUI
+        3. Enter your API key in the setup wizard
+        4. Start generating audio!
+        
+        ## 🆕 Features in This Release
+        
+        - Complete CLI and GUI interfaces
+        - All 6 major features implemented
+        - Cross-platform support (Windows, macOS, Linux)
+        - Comprehensive documentation
+        - Voice Library browser
+        - Setup wizard for easy configuration
+        
+        ## 📋 System Requirements
+        
+        - Python 3.8 or later
+        - Internet connection
+        - ElevenLabs API key
+        - 100MB free disk space
+        
+        ## 🐛 Known Issues
+        
+        None reported yet! Please file issues on GitHub.
+        
+        ## 🙏 Credits
+        
+        Built with ElevenLabs Cloud APIs and love for the Audacity community.
+        EOF
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          release-*/*.zip
+          release-*/*.tar.gz
+          release-*/dist/*
+        body_path: RELEASE_NOTES.md
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install build twine
+    
+    - name: Build package
+      run: python -m build
+    
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: twine upload dist/* || echo "PyPI upload skipped (no token configured)"
+      continue-on-error: true

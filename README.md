@@ -148,14 +148,16 @@ python audacity_cloudai.py example-prompts  # Example prompts
 - **Similarity Boost** (0.0 - 1.0): Enhances voice similarity to the selected voice
 - **Style** (0.0 - 1.0): Adds expressiveness (only for v2 models)
 
-## Extended Documentation
+## 📚 Documentation
 
-See [README_EXTENDED.md](README_EXTENDED.md) for:
-- All features in detail
-- Complete workflow examples
-- API cost breakdown
-- Ethics guidelines for voice library usage
-- Advanced use cases
+- **[Installation Guide](docs/INSTALLATION.md)** - Complete setup instructions
+- **[Quick Start](docs/QUICKSTART.md)** - Get started quickly
+- **[GUI Guide](docs/GUI_README.md)** - Graphical interface tutorial
+- **[Extended Documentation](docs/README_EXTENDED.md)** - All features and workflows
+- **[Feature Summary](docs/FEATURES_SUMMARY.md)** - Complete feature reference
+- **[Contributing](docs/CONTRIBUTING.md)** - How to contribute
+
+📖 **[Full Documentation Index](docs/README.md)**
 
 ## Development
 
