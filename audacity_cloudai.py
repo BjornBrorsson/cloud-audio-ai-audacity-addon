@@ -8,6 +8,15 @@ import sys
 import argparse
 from pathlib import Path
 
+# Fix for Python 3.13+ where audioop was removed
+try:
+    import audioop
+except ModuleNotFoundError:
+    from types import ModuleType
+    audioop = ModuleType('audioop')
+    sys.modules['audioop'] = audioop
+    sys.modules['pyaudioop'] = audioop
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
