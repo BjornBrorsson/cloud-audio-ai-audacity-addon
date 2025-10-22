@@ -52,10 +52,10 @@ jobs:
       env:
         ELEVENLABS_API_KEY: test_dummy_key_for_ci_testing_only
       run: |
-        python -c "import sys; sys.path.insert(0, 'src'); from generators import TextToSpeechGenerator, MusicGenerator, SoundEffectsGenerator; print('✓ All generators imported successfully')"
-        python -c "import sys; sys.path.insert(0, 'src'); from effects import VoiceIsolator; print('✓ Effects imported successfully')"
-        python -c "import sys; sys.path.insert(0, 'src'); from analyzers import AudioTranscriber; print('✓ Analyzers imported successfully')"
-        python -c "import sys; sys.path.insert(0, 'src'); from utils import Config, ElevenLabsAPI, AudioConverter; print('✓ Utils imported successfully')"
+        python -c "import sys; sys.path.insert(0, 'src'); from generators import TextToSpeechGenerator, MusicGenerator, SoundEffectsGenerator; print('[OK] All generators imported successfully')"
+        python -c "import sys; sys.path.insert(0, 'src'); from effects import VoiceIsolator; print('[OK] Effects imported successfully')"
+        python -c "import sys; sys.path.insert(0, 'src'); from analyzers import AudioTranscriber; print('[OK] Analyzers imported successfully')"
+        python -c "import sys; sys.path.insert(0, 'src'); from utils import Config, ElevenLabsAPI, AudioConverter; print('[OK] Utils imported successfully')"
     
     - name: Test CLI help
       env:
