@@ -38,26 +38,33 @@
     (setf args (format nil " \"~a\" -v \"~a\" -m \"~a\" --stability ~a --similarity ~a --style ~a"
                        text voice model-id stability similarity style-level))
     
-    ;; Construct full command
-    (setf full-cmd (strcat python-cmd args " -o temp_tts.wav"))
+    ;; Create temp output file path
+    (setf temp-file (strcat plugin-path "/temp_tts.wav"))
+    (setf full-cmd (strcat python-cmd args " -o \"" temp-file "\""))
     
     ;; Display info to user
     (setf info-msg (format nil "Generating speech...~%Voice: ~a~%Model: ~a~%Text: ~a"
                           voice model-id (substring text 0 (min 50 (length text)))))
+    (print info-msg)
     
-    ;; Execute the Python script
-    ;; Note: This is a simplified version. In practice, you'd need to:
-    ;; 1. Execute the Python script
-    ;; 2. Read the generated WAV file
-    ;; 3. Return the audio data to Audacity
+    ;; Execute the Python script and wait for it to finish
+    ;; Note: (system) may be disabled in some Audacity builds for security
+    (setf exit-code (system full-cmd))
     
-    ;; For now, return a simple tone as placeholder
-    ;; (In a full implementation, this would load and return the generated audio)
-    (s-rest 1.0)
+    ;; Check if command executed successfully
+    (if (= exit-code 0)
+      (progn
+        ;; Try to read the generated audio file
+        (setf *track* (s-read temp-file))
+        (if *track*
+          *track*  ;; Return the generated audio
+          (progn
+            (print "Error: Could not read generated audio file")
+            (s-rest 0))))
+      (progn
+        (print (format nil "Error: Python script failed with exit code ~a" exit-code))
+        (print "Make sure Python and dependencies are installed.")
+        (print "Set AUDACITY_CLOUDAI_PATH environment variable if needed.")
+        (s-rest 0)))
   )
 )
-
-;; Return result or error
-(if (boundp 'error-msg)
-  (s-rest 0)  ;; Return silence on error
-  (s-rest 1.0))  ;; Return placeholder audio

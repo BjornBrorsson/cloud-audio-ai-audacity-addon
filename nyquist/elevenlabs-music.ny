@@ -38,27 +38,36 @@
     (if (= use-plan 1)
       (setf args (strcat args " --plan")))
     
-    ;; Construct full command
-    (setf full-cmd (strcat python-cmd args " -o temp_music.wav"))
+    ;; Create temp output file path
+    (setf temp-file (strcat plugin-path "/temp_music.wav"))
+    (setf full-cmd (strcat python-cmd args " -o \"" temp-file "\""))
     
     ;; Display info to user
     (setf info-msg (format nil "Generating music...~%Description: ~a~%Duration: ~a seconds~%Genre: ~a~%Mood: ~a"
                           prompt duration 
                           (if (equal genre "") "Any" genre)
                           (if (equal mood "") "Any" mood)))
+    (print info-msg)
+    (print "This may take 30-60 seconds...")
     
-    ;; Execute the Python script
-    ;; Note: This is a simplified version. In practice, you'd need to:
-    ;; 1. Execute the Python script
-    ;; 2. Read the generated WAV file
-    ;; 3. Return the audio data to Audacity
+    ;; Execute the Python script and wait for it to finish
+    ;; Note: (system) may be disabled in some Audacity builds for security
+    (setf exit-code (system full-cmd))
     
-    ;; For now, return a simple tone as placeholder
-    (s-rest 1.0)
+    ;; Check if command executed successfully
+    (if (= exit-code 0)
+      (progn
+        ;; Try to read the generated audio file
+        (setf *track* (s-read temp-file))
+        (if *track*
+          *track*  ;; Return the generated audio
+          (progn
+            (print "Error: Could not read generated audio file")
+            (s-rest 0))))
+      (progn
+        (print (format nil "Error: Python script failed with exit code ~a" exit-code))
+        (print "Make sure Python and dependencies are installed.")
+        (print "Set AUDACITY_CLOUDAI_PATH environment variable if needed.")
+        (s-rest 0)))
   )
 )
-
-;; Return result or error
-(if (boundp 'error-msg)
-  (s-rest 0)  ;; Return silence on error
-  (s-rest 1.0))  ;; Return placeholder audio
