@@ -45,8 +45,9 @@ jobs:
       env:
         ELEVENLABS_API_KEY: test_dummy_key_for_ci_testing_only
       run: |
-        pytest tests/ -v --tb=short || echo "Tests not fully implemented yet"
-      continue-on-error: true
+        pytest tests/test_basic.py -v --tb=short
+        pytest tests/test_text_to_speech.py -v --tb=short || echo "Advanced tests skipped"
+      continue-on-error: false
     
     - name: Test CLI imports
       env:

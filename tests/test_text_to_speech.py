@@ -30,20 +30,32 @@ class TestTextToSpeechGenerator:
         importlib.reload(utils.config)
     
     @pytest.fixture
-    def generator(self):
+    def generator(self, monkeypatch):
         """Create a generator instance for testing."""
-        # Mock the API and converter
-        with patch('generators.text_to_speech.ElevenLabsAPI') as mock_api, \
-             patch('generators.text_to_speech.AudioConverter') as mock_converter:
-            mock_api_instance = Mock()
-            mock_api.return_value = mock_api_instance
-            mock_converter_instance = Mock()
-            mock_converter.return_value = mock_converter_instance
-            
-            generator = TextToSpeechGenerator()
-            generator.api = mock_api_instance
-            generator.converter = mock_converter_instance
-            return generator
+        # Mock the API and converter classes
+        mock_api_instance = Mock()
+        mock_converter_instance = Mock()
+        
+        # Patch at import time
+        def mock_api_init(self):
+            return mock_api_instance
+        
+        def mock_converter_init(self):
+            return mock_converter_instance
+        
+        # Use monkeypatch for cleaner mocking
+        from generators import text_to_speech
+        from utils import elevenlabs_api, audio_utils
+        
+        monkeypatch.setattr('generators.text_to_speech.ElevenLabsAPI', lambda: mock_api_instance)
+        monkeypatch.setattr('generators.text_to_speech.AudioConverter', lambda: mock_converter_instance)
+        
+        # Create generator with mocked dependencies
+        gen = TextToSpeechGenerator()
+        gen.api = mock_api_instance
+        gen.converter = mock_converter_instance
+        
+        return gen
     
     def test_initialization(self, generator):
         """Test generator initialization."""
