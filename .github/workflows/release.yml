@@ -14,9 +14,49 @@ on:
         description: 'Version number (e.g., 1.0.0)'
         required: true
         default: '1.0.0'
+  workflow_run:
+    workflows: ["CI - Tests and Linting"]
+    types:
+      - completed
+    branches:
+      - main
 
 jobs:
+  # Run tests before building release
+  test:
+    name: Run Tests Before Release
+    runs-on: ubuntu-latest
+    # Skip tests if triggered by workflow_run (CI already tested)
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+        env:
+          ELEVENLABS_API_KEY: test_dummy_key_for_ci_testing_only
+      
+      - name: Run tests
+        env:
+          ELEVENLABS_API_KEY: test_dummy_key_for_ci_testing_only
+        run: |
+          pytest tests/test_basic.py -v
+      
+      - name: Tests passed
+        run: |
+          echo "✅ All tests passed! Proceeding with release build..."
+  
   build:
+    needs: test
     name: Build Release Packages
     runs-on: ${{ matrix.os }}
     strategy:
@@ -33,6 +73,12 @@ jobs:
       run: |
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
           echo "tag=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" == "workflow_run" ]; then
+          # Auto-generated version for CI-triggered builds
+          DATE=$(date +%Y%m%d-%H%M%S)
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "tag=v1.0.0-dev-${DATE}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "Auto-generated dev version: v1.0.0-dev-${DATE}-${SHORT_SHA}"
         else
           echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
         fi
@@ -299,7 +345,7 @@ jobs:
           release-*/dist/*.tar.gz
         body_path: RELEASE_NOTES.md
         draft: false
-        prerelease: false
+        prerelease: ${{ github.event_name == 'workflow_run' }}
         fail_on_unmatched_files: false
         generate_release_notes: true
       env:
