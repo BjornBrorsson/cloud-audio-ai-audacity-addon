@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from datetime import datetime
 
 # Add parent directory to path for imports
@@ -108,7 +108,7 @@ class VoiceIsolator:
         self,
         input_file: Path,
         output_dir: Path
-    ) -> tuple[bytes, bytes]:
+    ) -> Tuple[bytes, bytes]:
         """
         Create before/after comparison files.
         

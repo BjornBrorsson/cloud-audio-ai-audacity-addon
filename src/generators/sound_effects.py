@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
 
 # Add parent directory to path for imports
@@ -109,7 +109,7 @@ class SoundEffectsGenerator:
         
         return audio_segments
     
-    def get_example_prompts(self) -> dict[str, str]:
+    def get_example_prompts(self) -> Dict[str, str]:
         """
         Get example sound effect prompts.
         
