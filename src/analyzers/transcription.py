@@ -1,10 +1,10 @@
 """Audio transcription using ElevenLabs Scribe API."""
 
 import sys
-from pathlib import Path
-from typing import Optional, Dict, Any
-from datetime import datetime
 import json
+from pathlib import Path
+from typing import Optional, Dict, Any, Tuple, List
+from datetime import datetime
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -181,10 +181,10 @@ class AudioTranscriber:
     
     def batch_transcribe(
         self,
-        input_files: list[Path],
+        input_files: List[Path],
         output_dir: Optional[Path] = None,
         **kwargs
-    ) -> list[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Transcribe multiple audio files.
         

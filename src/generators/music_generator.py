@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 # Add parent directory to path for imports
@@ -89,7 +89,7 @@ class MusicGenerator:
         prompt: str,
         genre: Optional[str] = None,
         mood: Optional[str] = None,
-        instruments: Optional[list[str]] = None,
+        instruments: Optional[List[str]] = None,
         tempo: Optional[str] = None,
         vocals: bool = False,
         **kwargs
@@ -137,7 +137,7 @@ class MusicGenerator:
     
     def create_soundtrack(
         self,
-        scenes: list[Dict[str, Any]],
+        scenes: List[Dict[str, Any]],
         merge: bool = True,
         crossfade_ms: int = 1000
     ) -> bytes:

@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 # Add parent directory to path for imports
@@ -124,12 +124,12 @@ class TextToSpeechGenerator:
     
     def batch_generate(
         self,
-        texts: list[str],
+        texts: List[str],
         voice_id: Optional[str] = None,
         model_id: Optional[str] = None,
         merge: bool = False,
         **kwargs
-    ) -> list[bytes]:
+    ) -> List[bytes]:
         """
         Generate multiple speech segments.
         
@@ -162,7 +162,7 @@ class TextToSpeechGenerator:
         
         return audio_segments
     
-    def get_available_voices(self) -> list[Dict[str, Any]]:
+    def get_available_voices(self) -> List[Dict[str, Any]]:
         """
         Get list of available voices from ElevenLabs.
         

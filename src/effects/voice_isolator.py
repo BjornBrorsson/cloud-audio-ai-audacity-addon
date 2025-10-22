@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 # Add parent directory to path for imports
@@ -71,9 +71,9 @@ class VoiceIsolator:
     
     def batch_isolate(
         self,
-        input_files: list[Path],
+        input_files: List[Path],
         output_dir: Optional[Path] = None
-    ) -> list[bytes]:
+    ) -> List[bytes]:
         """
         Isolate voice from multiple audio files.
         

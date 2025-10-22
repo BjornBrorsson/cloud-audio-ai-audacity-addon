@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 # Add parent directory to path for imports
@@ -77,10 +77,10 @@ class SoundEffectsGenerator:
     
     def batch_generate(
         self,
-        descriptions: list[str],
+        descriptions: List[str],
         merge: bool = False,
         **kwargs
-    ) -> list[bytes]:
+    ) -> List[bytes]:
         """
         Generate multiple sound effects.
         

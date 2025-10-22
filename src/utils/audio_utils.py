@@ -4,7 +4,7 @@ import io
 import wave
 import numpy as np
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 from pydub import AudioSegment
 from .config import Config
 
@@ -129,7 +129,7 @@ class AudioConverter:
         return len(audio) / 1000.0  # pydub uses milliseconds
     
     @staticmethod
-    def merge_audio(audio_segments: list[bytes], crossfade_ms: int = 0) -> bytes:
+    def merge_audio(audio_segments: List[bytes], crossfade_ms: int = 0) -> bytes:
         """
         Merge multiple audio segments.
         
@@ -196,7 +196,7 @@ class AudacityInterface:
     """Utilities for interfacing with Audacity."""
     
     @staticmethod
-    def create_label_track(labels: list[Tuple[float, float, str]]) -> str:
+    def create_label_track(labels: List[Tuple[float, float, str]]) -> str:
         """
         Create Audacity label track format.
         
