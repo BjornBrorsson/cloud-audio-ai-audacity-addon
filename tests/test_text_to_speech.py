@@ -47,8 +47,8 @@ class TestTextToSpeechGenerator:
         from generators import text_to_speech
         from utils import elevenlabs_api, audio_utils
         
-        monkeypatch.setattr('generators.text_to_speech.ElevenLabsAPI', lambda: mock_api_instance)
-        monkeypatch.setattr('generators.text_to_speech.AudioConverter', lambda: mock_converter_instance)
+        monkeypatch.setattr('generators.text_to_speech.ElevenLabsAPI', lambda *args, **kwargs: mock_api_instance)
+        monkeypatch.setattr('generators.text_to_speech.AudioConverter', lambda *args, **kwargs: mock_converter_instance)
         
         # Create generator with mocked dependencies
         gen = TextToSpeechGenerator()

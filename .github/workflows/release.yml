@@ -54,6 +54,13 @@ jobs:
         echo "VERSION = '${{ steps.version.outputs.tag }}'" > src/version.py
       shell: bash
     
+    - name: Update setup.py version
+      run: |
+        VERSION="${{ steps.version.outputs.tag }}"
+        VERSION_NUM="${VERSION#v}"  # Remove 'v' prefix
+        sed -i "s/version='[^']*'/version='$VERSION_NUM'/" setup.py
+      shell: bash
+    
     - name: Build standalone executable (Windows)
       if: matrix.os == 'windows-latest'
       run: |
@@ -69,19 +76,52 @@ jobs:
       continue-on-error: true
     
     - name: Create distribution package
+      if: matrix.os == 'ubuntu-latest'
       run: |
         pip install wheel setuptools
         python setup.py sdist bdist_wheel
       continue-on-error: true
     
+    - name: Install Inno Setup
+      if: matrix.os == 'windows-latest'
+      run: |
+        Write-Host "Installing Inno Setup..."
+        choco install innosetup -y --no-progress
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Failed to install Inno Setup via Chocolatey"
+          exit 1
+        }
+        Write-Host "Inno Setup installed successfully"
+      shell: pwsh
+    
     - name: Build Windows Installer
       if: matrix.os == 'windows-latest'
       run: |
-        choco install innosetup -y || echo "Inno Setup install skipped"
+        Write-Host "Building Windows installer..."
+        
+        # Update version in installer.iss
+        $version = "${{ steps.version.outputs.tag }}"
+        $versionNum = $version -replace '^v', ''
+        $issPath = "installer\windows\installer.iss"
+        (Get-Content $issPath) -replace '#define MyAppVersion ".*"', "#define MyAppVersion `"$versionNum`"" | Set-Content $issPath
+        Write-Host "Updated installer version to $versionNum"
+        
+        # Build installer
         cd installer/windows
-        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss || echo "Installer build skipped"
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Failed to build installer"
+          exit 1
+        }
+        Write-Host "Installer built successfully!"
+        
+        # Move installer to root for easier artifact upload
+        cd ..\..
+        if (Test-Path "dist\*.exe") {
+          Copy-Item "dist\*.exe" "." -Force
+          Get-ChildItem "*.exe" | ForEach-Object { Write-Host "Created: $($_.Name)" }
+        }
       shell: pwsh
-      continue-on-error: true
     
     - name: Build Linux .deb Package
       if: matrix.os == 'ubuntu-latest'
