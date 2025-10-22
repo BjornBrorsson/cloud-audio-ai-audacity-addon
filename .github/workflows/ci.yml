@@ -42,11 +42,15 @@ jobs:
       continue-on-error: true
     
     - name: Run tests
+      env:
+        ELEVENLABS_API_KEY: test_dummy_key_for_ci_testing_only
       run: |
-        pytest tests/ -v || echo "Tests not fully implemented yet"
+        pytest tests/ -v --tb=short || echo "Tests not fully implemented yet"
       continue-on-error: true
     
     - name: Test CLI imports
+      env:
+        ELEVENLABS_API_KEY: test_dummy_key_for_ci_testing_only
       run: |
         python -c "import sys; sys.path.insert(0, 'src'); from generators import TextToSpeechGenerator, MusicGenerator, SoundEffectsGenerator; print('✓ All generators imported successfully')"
         python -c "import sys; sys.path.insert(0, 'src'); from effects import VoiceIsolator; print('✓ Effects imported successfully')"
@@ -54,6 +58,8 @@ jobs:
         python -c "import sys; sys.path.insert(0, 'src'); from utils import Config, ElevenLabsAPI, AudioConverter; print('✓ Utils imported successfully')"
     
     - name: Test CLI help
+      env:
+        ELEVENLABS_API_KEY: test_dummy_key_for_ci_testing_only
       run: |
         python audacity_cloudai.py --help
 
