@@ -14,6 +14,22 @@
 ;control similarity "Similarity Boost (0-100)" int "" 75 0 100
 ;control style "Style Exaggeration (0-100)" int "" 0 0 100
 
+;; Check for API key first
+(setf plugin-dir (get-env "APPDATA"))
+(setf plugin-dir (strcat plugin-dir "\\audacity\\Plug-Ins"))
+(setf env-file (strcat plugin-dir "\\.env"))
+
+;; Check if .env file exists
+(setf has-env (open env-file :direction :probe))
+(if (not has-env)
+    (error "API Key Required" 
+           (strcat "Get a free API key at: https://elevenlabs.io"
+                   "\n\nThen create a file named .env in:"
+                   "\n" plugin-dir
+                   "\n\nWith this content:"
+                   "\nELEVENLABS_API_KEY=your_key_here"
+                   "\n\nOr run: install-nyquist-plugins.ps1 again")))
+
 ;; Build output file path in system temp directory
 (setf output-file (format nil "~a\\ai-tts-output-~a.wav" 
                          (get-env "TEMP")

@@ -12,23 +12,30 @@ Native Audacity plugins that integrate ElevenLabs AI features directly into Auda
 
 ## Installation
 
-### 1. Install Python Backend
+### 1. Use the Installer (Recommended)
+
+**Windows:**
+```powershell
+.\install-nyquist-plugins.ps1
+```
+
+The installer will:
+- Copy all plugins to Audacity
+- Prompt for your API key
+- Set up Python dependencies
+
+### 2. Manual Installation
+
+#### Install Python Backend
 
 ```bash
 cd "C:\Coding Projects\Audacity-CloudAI"
 pip install -r requirements.txt
 ```
 
-### 2. Set API Key
+#### Install Plugins
 
-Create `.env` file or set environment variable:
-```bash
-ELEVENLABS_API_KEY=your_api_key_here
-```
-
-### 3. Install Plugins
-
-Copy all `.ny` files to your Audacity plugins folder:
+Copy all `.ny` files AND `api_key_helper.py` to your Audacity plugins folder:
 
 **Windows:**
 ```
@@ -50,12 +57,37 @@ Or use Audacity's user plugins folder:
 - macOS: `~/Library/Application Support/audacity/Plug-Ins/`
 - Linux: `~/.audacity-data/Plug-Ins/`
 
-### 4. Restart Audacity
+### 3. Restart Audacity
 
 The plugins will appear in their respective menus:
 - Generate → AI Text-to-Speech, AI Music Generator, AI Sound Effects
 - Effect → AI Voice Isolation
 - Analyze → AI Transcription
+
+## First-Time Usage
+
+**When you first run any plugin without an API key:**
+
+An error dialog will appear with instructions:
+- Where to get a free API key (elevenlabs.io)
+- Where to create the `.env` file
+- What to put in the file
+
+**Quick Setup:**
+
+Run this helper script:
+```powershell
+.\create-env-file.ps1
+```
+
+Or manually create `.env` in: `%APPDATA%\audacity\Plug-Ins\`
+
+With content:
+```
+ELEVENLABS_API_KEY=your_key_here
+```
+
+**One-time setup** - all plugins share the same API key!
 
 ## Usage
 

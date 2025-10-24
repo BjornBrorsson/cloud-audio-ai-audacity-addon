@@ -66,42 +66,37 @@ This project provides **three ways** to use ElevenLabs AI with Audacity:
 
 ### Setup
 
-1. **Clone or download this repository**
-   ```bash
-   git clone https://github.com/yourusername/audacity-cloudai.git
+1. **Download the latest release**
+   - Go to [Releases](https://github.com/BjornBrorsson/cloud-audio-ai-audacity-addon/releases)
+   - Download for your platform (Windows, macOS, Linux)
+   - Or clone: `git clone https://github.com/BjornBrorsson/cloud-audio-ai-audacity-addon.git`
+
+2. **Run the installer** (Recommended)
+   
+   **Windows:**
+   ```powershell
    cd audacity-cloudai
+   .\install-nyquist-plugins.ps1
    ```
-
-2. **Install Python dependencies**
+   
+   The installer will:
+   - ✅ Copy plugins to Audacity
+   - ✅ Prompt for your API key (get free key at [elevenlabs.io](https://elevenlabs.io))
+   - ✅ Set up `.env` file automatically
+   - ✅ Install Python dependencies
+   
+   **macOS/Linux:**
    ```bash
+   cd audacity-cloudai
    pip install -r requirements.txt
+   # Copy .ny files from nyquist-plugins/ to:
+   # Mac: ~/Library/Application Support/audacity/Plug-Ins/
+   # Linux: ~/.audacity-data/Plug-Ins/
    ```
 
-3. **Configure your API key**
+3. **Restart Audacity**
    
-   Create a `.env` file in the plugin directory:
-   ```
-   ELEVENLABS_API_KEY=your_api_key_here
-   ```
-   
-   Or set it as an environment variable:
-   ```bash
-   # Windows
-   set ELEVENLABS_API_KEY=your_api_key_here
-   
-   # Linux/Mac
-   export ELEVENLABS_API_KEY=your_api_key_here
-   ```
-
-4. **Install Nyquist plugins** (for Audacity integration)
-   
-   Copy all `.ny` files from `nyquist-plugins/` to your Audacity plugin directory:
-   
-   - **Windows**: `%APPDATA%\audacity\Plug-Ins\`
-   - **Mac**: `~/Library/Application Support/audacity/Plug-Ins/`
-   - **Linux**: `~/.audacity-data/Plug-Ins/`
-   
-   Then restart Audacity. Plugins will appear in Generate, Effect, and Analyze menus.
+   Plugins will appear in Generate, Effect, and Analyze menus!
 
 ## Usage
 
