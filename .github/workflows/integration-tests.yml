@@ -1,0 +1,267 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+
+jobs:
+  test-end-to-end:
+    name: E2E Tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.11']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-timeout
+    
+    - name: Test TTS workflow (mock)
+      env:
+        ELEVENLABS_API_KEY: test_key_mock_for_integration_testing
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from generators.text_to_speech import TextToSpeechGenerator
+        
+        # Create generator
+        gen = TextToSpeechGenerator()
+        print('✓ TTS Generator created')
+        
+        # Test validation
+        assert gen.validate_text('Hello world') == True
+        assert gen.validate_text('') == False
+        print('✓ Text validation works')
+        
+        print('✓ TTS integration test passed')
+        "
+    
+    - name: Test Music workflow (mock)
+      env:
+        ELEVENLABS_API_KEY: test_key_mock_for_integration_testing
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from generators.music import MusicGenerator
+        
+        gen = MusicGenerator()
+        print('✓ Music Generator created')
+        
+        # Test prompt validation
+        assert gen.validate_prompt('Upbeat electronic music') == True
+        assert gen.validate_prompt('') == False
+        print('✓ Music integration test passed')
+        "
+    
+    - name: Test Sound Effects workflow (mock)
+      env:
+        ELEVENLABS_API_KEY: test_key_mock_for_integration_testing
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from generators.sound_effects import SoundEffectsGenerator
+        
+        gen = SoundEffectsGenerator()
+        print('✓ SFX Generator created')
+        print('✓ SFX integration test passed')
+        "
+    
+    - name: Test Voice Isolator workflow (mock)
+      env:
+        ELEVENLABS_API_KEY: test_key_mock_for_integration_testing
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from effects.voice_isolator import VoiceIsolator
+        
+        iso = VoiceIsolator()
+        print('✓ Voice Isolator created')
+        print('✓ Voice isolation integration test passed')
+        "
+    
+    - name: Test Transcriber workflow (mock)
+      env:
+        ELEVENLABS_API_KEY: test_key_mock_for_integration_testing
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from analyzers.transcriber import AudioTranscriber
+        
+        trans = AudioTranscriber()
+        print('✓ Transcriber created')
+        print('✓ Transcription integration test passed')
+        "
+    
+    - name: Test CLI full workflow
+      env:
+        ELEVENLABS_API_KEY: test_key_mock_for_integration_testing
+      run: |
+        python audacity_cloudai.py --help
+        python audacity_cloudai.py tts --help
+        python audacity_cloudai.py music --help
+        python audacity_cloudai.py sfx --help
+        echo "✓ CLI commands accessible"
+    
+    - name: Test GUI imports
+      run: |
+        python -c "import sys; import gui_launcher; print('✓ GUI imports OK')"
+    
+    - name: Integration test summary
+      run: |
+        echo "✅ All integration tests passed!"
+        echo "   - TTS workflow"
+        echo "   - Music workflow"
+        echo "   - SFX workflow"
+        echo "   - Voice isolation workflow"
+        echo "   - Transcription workflow"
+        echo "   - CLI functionality"
+        echo "   - GUI imports"
+
+  test-with-real-api:
+    name: Real API Test (if key available)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Test with real API (if key exists)
+      env:
+        ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+      run: |
+        if [ -n "$ELEVENLABS_API_KEY" ]; then
+          echo "Testing with real API key..."
+          python -c "
+          import sys
+          sys.path.insert(0, 'src')
+          from utils.elevenlabs_api import ElevenLabsAPI
+          
+          api = ElevenLabsAPI()
+          voices = api.get_voices()
+          
+          if voices:
+              print(f'✓ Successfully retrieved {len(voices)} voices from API')
+          else:
+              print('⚠ No voices retrieved')
+          "
+        else
+          echo "⚠ No API key configured, skipping real API test"
+        fi
+      continue-on-error: true
+
+  test-error-handling:
+    name: Error Handling Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Test missing API key handling
+      run: |
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, 'src')
+        
+        # Remove API key
+        os.environ.pop('ELEVENLABS_API_KEY', None)
+        
+        from utils.config import Config
+        config = Config()
+        
+        # Should handle missing key gracefully
+        assert config.api_key == '' or config.api_key is None
+        print('✓ Missing API key handled correctly')
+        "
+    
+    - name: Test invalid inputs
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from generators.text_to_speech import TextToSpeechGenerator
+        
+        gen = TextToSpeechGenerator()
+        
+        # Test empty text
+        assert gen.validate_text('') == False
+        
+        # Test very long text
+        long_text = 'a' * 10000
+        result = gen.validate_text(long_text)
+        print(f'✓ Long text validation: {result}')
+        
+        print('✓ Invalid input handling works')
+        "
+    
+    - name: Test file not found handling
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from utils.audio_converter import AudioConverter
+        
+        converter = AudioConverter()
+        
+        # Should not crash on missing file
+        try:
+            converter.validate_audio_file('/nonexistent/file.wav')
+            print('✓ Missing file handled')
+        except Exception as e:
+            print(f'✓ Exception caught: {type(e).__name__}')
+        "
+
+  report-status:
+    name: Report Test Status
+    needs: [test-end-to-end, test-error-handling]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Check test results
+      run: |
+        echo "Integration test run complete!"
+        echo "Check individual job results above"

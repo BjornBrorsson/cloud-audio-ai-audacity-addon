@@ -1,0 +1,161 @@
+name: Build C++ Module
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ created ]
+
+jobs:
+  build-windows:
+    name: Build Windows Module
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Cache Audacity
+      id: cache-audacity
+      uses: actions/cache@v3
+      with:
+        path: C:\audacity
+        key: audacity-3.4.2-windows
+    
+    - name: Clone Audacity
+      if: steps.cache-audacity.outputs.cache-hit != 'true'
+      run: |
+        cd C:\
+        git clone --depth 1 --branch Audacity-3.4.2 https://github.com/audacity/audacity.git
+    
+    - name: Copy Module
+      run: |
+        Copy-Item -Recurse audacity-module C:\audacity\modules\mod-cloud-ai
+    
+    - name: Update CMakeLists
+      run: |
+        Add-Content "C:\audacity\modules\CMakeLists.txt" "`nadd_subdirectory(mod-cloud-ai)"
+    
+    - name: Configure CMake
+      run: |
+        cd C:\audacity
+        mkdir build
+        cd build
+        cmake -G "Visual Studio 17 2022" -A x64 ..
+    
+    - name: Build Module
+      run: |
+        cd C:\audacity\build
+        cmake --build . --config Release --target mod-cloud-ai
+    
+    - name: Find DLL
+      id: find-dll
+      run: |
+        $dll = Get-ChildItem -Path C:\audacity\build -Filter "mod-cloud-ai.dll" -Recurse | Select-Object -First 1
+        Write-Output "dll_path=$($dll.FullName)" >> $env:GITHUB_OUTPUT
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: mod-cloud-ai-windows
+        path: ${{ steps.find-dll.outputs.dll_path }}
+
+  build-linux:
+    name: Build Linux Module
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libwxgtk3.0-gtk3-dev
+    
+    - name: Cache Audacity
+      id: cache-audacity
+      uses: actions/cache@v3
+      with:
+        path: ~/audacity
+        key: audacity-3.4.2-linux
+    
+    - name: Clone Audacity
+      if: steps.cache-audacity.outputs.cache-hit != 'true'
+      run: |
+        cd ~
+        git clone --depth 1 --branch Audacity-3.4.2 https://github.com/audacity/audacity.git
+    
+    - name: Copy Module
+      run: |
+        cp -r audacity-module ~/audacity/modules/mod-cloud-ai
+    
+    - name: Update CMakeLists
+      run: |
+        echo "add_subdirectory(mod-cloud-ai)" >> ~/audacity/modules/CMakeLists.txt
+    
+    - name: Build
+      run: |
+        cd ~/audacity
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+        make mod-cloud-ai -j$(nproc)
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: mod-cloud-ai-linux
+        path: ~/audacity/build/modules/mod-cloud-ai/mod-cloud-ai.so
+
+  build-macos:
+    name: Build macOS Module
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        brew install cmake wxwidgets
+    
+    - name: Cache Audacity
+      id: cache-audacity
+      uses: actions/cache@v3
+      with:
+        path: ~/audacity
+        key: audacity-3.4.2-macos
+    
+    - name: Clone Audacity
+      if: steps.cache-audacity.outputs.cache-hit != 'true'
+      run: |
+        cd ~
+        git clone --depth 1 --branch Audacity-3.4.2 https://github.com/audacity/audacity.git
+    
+    - name: Copy Module
+      run: |
+        cp -r audacity-module ~/audacity/modules/mod-cloud-ai
+    
+    - name: Update CMakeLists
+      run: |
+        echo "add_subdirectory(mod-cloud-ai)" >> ~/audacity/modules/CMakeLists.txt
+    
+    - name: Build
+      run: |
+        cd ~/audacity
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+        make mod-cloud-ai -j$(sysctl -n hw.ncpu)
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: mod-cloud-ai-macos
+        path: ~/audacity/build/modules/mod-cloud-ai/mod-cloud-ai.dylib

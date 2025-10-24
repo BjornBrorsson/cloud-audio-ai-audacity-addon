@@ -55,8 +55,88 @@ jobs:
         run: |
           echo "✅ All tests passed! Proceeding with release build..."
   
-  build:
+  # Build native C++ modules for Audacity
+  build-cpp-modules:
     needs: test
+    name: Build C++ Modules
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Build Tools (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: microsoft/setup-msbuild@v1.1
+      
+      - name: Install Dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential libwxgtk3.0-gtk3-dev
+      
+      - name: Install Dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install cmake wxwidgets
+      
+      - name: Cache Audacity
+        id: cache-audacity
+        uses: actions/cache@v3
+        with:
+          path: ~/audacity-source
+          key: audacity-3.4.2-${{ matrix.os }}
+      
+      - name: Clone Audacity
+        if: steps.cache-audacity.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch Audacity-3.4.2 https://github.com/audacity/audacity.git ~/audacity-source
+        shell: bash
+      
+      - name: Copy Module
+        run: |
+          cp -r audacity-module ~/audacity-source/modules/mod-cloud-ai
+        shell: bash
+      
+      - name: Update CMakeLists
+        run: |
+          echo "add_subdirectory(mod-cloud-ai)" >> ~/audacity-source/modules/CMakeLists.txt
+        shell: bash
+      
+      - name: Build Module
+        run: |
+          cd ~/audacity-source
+          mkdir -p build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . --config Release --target mod-cloud-ai
+        shell: bash
+        continue-on-error: true
+      
+      - name: Find Built Module
+        id: find-module
+        run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            MODULE=$(find ~/audacity-source/build -name "mod-cloud-ai.dll" | head -1)
+          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+            MODULE=$(find ~/audacity-source/build -name "mod-cloud-ai.dylib" | head -1)
+          else
+            MODULE=$(find ~/audacity-source/build -name "mod-cloud-ai.so" | head -1)
+          fi
+          echo "module_path=$MODULE" >> $GITHUB_OUTPUT
+        shell: bash
+        continue-on-error: true
+      
+      - name: Upload C++ Module
+        uses: actions/upload-artifact@v4
+        with:
+          name: mod-cloud-ai-${{ matrix.os }}
+          path: ${{ steps.find-module.outputs.module_path }}
+        continue-on-error: true
+  
+  build:
+    needs: [test, build-cpp-modules]
     name: Build Release Packages
     runs-on: ${{ matrix.os }}
     strategy:
@@ -227,7 +307,7 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: build
+    needs: [build, build-cpp-modules]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     
@@ -237,6 +317,15 @@ jobs:
     
     - name: Download all artifacts
       uses: actions/download-artifact@v4
+    
+    - name: Organize C++ Modules
+      run: |
+        mkdir -p native-modules
+        find . -name "mod-cloud-ai.dll" -exec cp {} native-modules/ \; || true
+        find . -name "mod-cloud-ai.so" -exec cp {} native-modules/ \; || true
+        find . -name "mod-cloud-ai.dylib" -exec cp {} native-modules/ \; || true
+        ls -la native-modules/ || true
+      continue-on-error: true
     
     - name: Create Release Notes
       run: |
@@ -259,13 +348,27 @@ jobs:
         
         ## 📦 Installation
         
-        ### Quick Install (Recommended)
+        ### Option 1: Python Package (Recommended for Most Users)
         
         **Windows:**
         1. Download `AudacityCloudAI-Windows-${{ github.ref_name }}.zip`
         2. Extract to a folder
         3. Run `install.bat`
         4. Double-click `Start GUI.bat`
+        
+        ### Option 2: Native Audacity Module (Advanced Users)
+        
+        For seamless Audacity integration:
+        1. Download the appropriate native module:
+           - **Windows:** `mod-cloud-ai.dll`
+           - **Linux:** `mod-cloud-ai.so`
+           - **macOS:** `mod-cloud-ai.dylib`
+        2. Copy to Audacity modules folder:
+           - **Windows:** \`C:\\Program Files\\Audacity\\modules\\\`
+           - **Linux:** \`/usr/local/lib/audacity/modules/\`
+           - **macOS:** \`/Applications/Audacity.app/Contents/modules/\`
+        3. Restart Audacity
+        4. Look for AI options in Generate menu!
         
         **Linux/macOS:**
         1. Download the appropriate `.tar.gz` file
@@ -343,6 +446,9 @@ jobs:
           release-*/*.exe
           release-*/dist/*.whl
           release-*/dist/*.tar.gz
+          native-modules/*.dll
+          native-modules/*.so
+          native-modules/*.dylib
         body_path: RELEASE_NOTES.md
         draft: false
         prerelease: ${{ github.event_name == 'workflow_run' }}

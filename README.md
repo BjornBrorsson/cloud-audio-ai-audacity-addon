@@ -1,12 +1,20 @@
-# Audacity Cloud AI Plugin 🎵☁️
+# Audacity Cloud AI 🎵☁️
 
-A powerful Audacity plugin that integrates cloud-based AI capabilities from ElevenLabs, including:
-- 🎤 **Text-to-Speech Voice Generation** - Generate professional voiceovers from text
-- 🎶 **AI Music Generation** - Create original music from text prompts
+Integrate ElevenLabs AI capabilities directly into Audacity with native Nyquist plugins:
+
+- 🎤 **Text-to-Speech** - Generate professional voiceovers from text
+- 🎶 **Music Generation** - Create original music from text prompts
 - 🔊 **Sound Effects** - Generate realistic sound effects from descriptions
 - 🎧 **Voice Isolation** - Remove background noise and isolate voice
-- 📝 **Audio Transcription** - Convert speech to text (99 languages)
-- 👥 **Voice Library** - Browse and discover thousands of AI voices
+- 📝 **Transcription** - Convert speech to text (30+ languages)
+
+## How It Works
+
+This project provides **three ways** to use ElevenLabs AI with Audacity:
+
+1. **Nyquist Plugins** (Recommended) - Native Audacity menu integration
+2. **Python GUI** - Standalone app with all features
+3. **CLI Tool** - Command-line interface for scripting
 
 ## Features
 
@@ -85,19 +93,49 @@ A powerful Audacity plugin that integrates cloud-based AI capabilities from Elev
    export ELEVENLABS_API_KEY=your_api_key_here
    ```
 
-4. **Install the plugin in Audacity**
+4. **Install Nyquist plugins** (for Audacity integration)
    
-   Copy the plugin files to your Audacity plugin directory:
+   Copy all `.ny` files from `nyquist-plugins/` to your Audacity plugin directory:
    
    - **Windows**: `%APPDATA%\audacity\Plug-Ins\`
    - **Mac**: `~/Library/Application Support/audacity/Plug-Ins/`
    - **Linux**: `~/.audacity-data/Plug-Ins/`
+   
+   Then restart Audacity. Plugins will appear in Generate, Effect, and Analyze menus.
 
 ## Usage
 
-### Command-Line Interface (Recommended)
+### Option 1: Nyquist Plugins (Native Audacity Integration)
 
-The plugin works via command-line for maximum flexibility:
+**After installation, use plugins directly from Audacity menus:**
+
+**Generate Menu:**
+- **AI Text-to-Speech** - Enter text, select voice, generate
+- **AI Music Generator** - Describe music, set duration
+- **AI Sound Effects** - Describe sound, set duration
+
+**Effect Menu:**
+- **AI Voice Isolation** - Select audio, apply effect
+
+**Analyze Menu:**
+- **AI Transcription** - Select audio, get transcription
+
+See [nyquist-plugins/README.md](nyquist-plugins/README.md) for detailed usage.
+
+### Option 2: Python GUI (Standalone App)
+
+```bash
+python gui_launcher.py
+```
+
+- Full-featured GUI application
+- Voice browser, preview features
+- Works independently of Audacity
+- Import generated audio into Audacity
+
+### Option 3: Command-Line Interface (Scripting)
+
+For automation and scripting:
 
 ```bash
 # Generate speech
@@ -226,10 +264,39 @@ This plugin uses the ElevenLabs API, which is a paid service:
 - Restart Audacity after installation
 - Check Audacity's plugin manager (Edit → Preferences → Effects)
 
+## 📚 Documentation
+
+This project has comprehensive documentation organized by audience:
+
+### For Users
+- **[docs/](docs/README.md)** - Complete documentation hub with guides for:
+  - Installation, Quick Start, GUI usage
+  - All features and examples
+  - See [docs/README.md](docs/README.md) for full index
+
+### For Developers
+- **[nyquist-plugins/README.md](nyquist-plugins/README.md)** - Nyquist plugin documentation
+  - Installation and usage
+  - Customization and troubleshooting
+- **[examples/README.md](examples/README.md)** - Usage examples
+  - CLI examples for all features
+  - Workflow examples (podcasts, games, education)
+- **[tests/README.md](tests/README.md)** - Testing documentation
+  - Running tests, writing tests
+  - Coverage goals
+
+### For Package Maintainers
+- **[installer/README.md](installer/README.md)** - Installer build instructions
+  - Windows (Inno Setup), Linux (.deb), macOS (.dmg)
+  - CI/CD integration
+
 ## Contributing
 
 Contributions are welcome! This is an open-source project.
 
+See **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** for detailed guidelines.
+
+Quick start:
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)

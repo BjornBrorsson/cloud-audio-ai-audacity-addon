@@ -11,20 +11,20 @@ Welcome to the Audacity Cloud AI documentation!
 ## 📖 Comprehensive Guides
 
 - **[Extended Documentation](README_EXTENDED.md)** - Complete feature documentation with examples
-- **[Feature Summary](FEATURES_SUMMARY.md)** - All features at a glance
-- **[Project Overview](PROJECT_OVERVIEW.md)** - Technical architecture and design
+- **[Audacity Integration](AUDACITY_INTEGRATION.md)** - How to integrate with Audacity
+- **[Nyquist Plugin Setup](NYQUIST_PLUGIN_SETUP.md)** - Using Nyquist plugins
+- **[Nyquist Plugins README](../nyquist-plugins/README.md)** - Native Audacity plugins
 
 ## 🛠️ For Developers
 
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
 - **[Release Guide](RELEASE_GUIDE.md)** - Creating and publishing releases
-- **[CI/CD Setup](CI_CD_SETUP_COMPLETE.md)** - Continuous integration details
-- **[GitHub Setup](GITHUB_SETUP.md)** - Repository setup instructions
+- **[Examples](../examples/README.md)** - Usage examples and workflows
+- **[Tests](../tests/README.md)** - Running and writing tests
 
-## 🎉 Project Information
+## 📦 Building & Packaging
 
-- **[Complete Features](COMPLETE_FEATURES.md)** - Comprehensive feature checklist
-- **[Project Complete](PROJECT_COMPLETE.md)** - Final project summary
+- **[Installer README](../installer/README.md)** - Building platform-specific installers
 
 ## 🔗 External Links
 
